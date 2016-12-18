@@ -84,11 +84,22 @@ app.post('/beers/:id/reviews', function(req, res, next) {
   });
 });
 
+// serializer/deserializer; filtering out password
 passport.serializeUser(function (user, done) {
+  user = {
+    username: user.username,
+    _id: user._id
+  };
+
   done(null, user);
 });
 
 passport.deserializeUser(function (user, done) {
+  user = {
+    username: user.username,
+    _id: user._id
+  };
+
   done(null, user);
 });
 
@@ -151,5 +162,32 @@ app.post('/register', passport.authenticate('register'), function (req, res) {
 app.get('/currentUser', function (req, res) {
   res.send(req.user);
 });
+
+//logout
+app.get('/logout', function(req, res) {
+  req.logout();
+  res.redirect('/');
+});
+
+//login Authentication strategy
+passport.use('login', new LocalStrategy(function (username, password, done) {
+  User.findOne({ username: username, password: password }, function (err, user) {
+    if (err) {
+      return done(err); 
+    }
+
+    if (!user) { 
+      return done(null, false); 
+    }
+
+    return done(null, user);
+  });
+}));
+
+// login Post route
+app.post('/login', passport.authenticate('login'), function(req, res) {
+  res.send(req.user);
+});
+
 
 app.listen(8000);
